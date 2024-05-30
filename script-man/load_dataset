@@ -1,0 +1,7 @@
+These script will load the dataset to the hdfs
+
+args:
+
+$location of the diskFailures.csv 
+
+if empty it will look for the folder ./data-stored-volume

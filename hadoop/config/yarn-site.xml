@@ -1,0 +1,56 @@
+<configuration>
+    <property>
+        <name>arn.acl.enable</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>yarn.admin.acl</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>false</value>
+    </property>
+
+    <property>
+        <name>yarn.resourcemanager.address</name>
+        <value>resourcemanager:4040</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.scheduler.address</name>
+        <value>resourcemanager:4041</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.resource-tracker.address</name>
+        <value>resourcemanager:4042</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.admin.address</name>
+        <value>resourcemanager:4043</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.webapp.address</name>
+        <value>resourcemanager:8088</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>resourcemanager</value>
+    </property>
+
+
+    <property>
+        <name>yarn.nodemanager.resource.memory-mb</name>
+        <value>1024</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.local-dirs</name>
+        <value>/nodemanager/intermediate</value>
+    </property>
+ 
+    <property>
+        <name>yarn.nodemanager.log-dirs</name>
+        <value>/nodemanager/logs</value>
+    </property>
+ 
+    
+</configuration>

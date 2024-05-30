@@ -1,0 +1,30 @@
+<configuration>
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/hadoop/logs</value>
+    </property>
+    <property>
+        <name>dfs.blocksize</name>
+        <value>134217728</value>
+    </property>
+    <property>
+        <name>dfs.namenode.handler.count</name>
+        <value>100</value>
+    </property>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>/datanode/datablocks</value>
+    </property>
+
+    <property>
+        <name>dfs.namenode.provided.enabled</name>
+        <value>true</value>
+        <description>Enabled provided storage on the Namenode</description>
+      </property>
+      <property>
+        <name>dfs.datanode.provided.enabled</name>
+        <value>true</value>
+        <description>Enabled provided storage on the Datanode</description>
+      </property>
+      
+</configuration>

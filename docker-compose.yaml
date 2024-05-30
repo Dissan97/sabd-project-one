@@ -1,0 +1,179 @@
+version: '3'
+
+services:
+########################## Hadoop ##########################
+  namenode:
+    image: hadoop-cluster
+    hostname: namenode
+    user: root
+    command: ["./entrypoint.sh","namenode"]
+    volumes:
+      - ./data-stored/namenode-data:/hadoop/logs
+      - ./data-stored/volume:/pipeline/source
+    ports:
+      - 54310:54310
+      - 9870:9870
+    networks:
+      - hadoop-net
+    
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 2048M
+
+  datanode-1:
+    image: hadoop-cluster
+    hostname: datanode-1
+    user: root
+    command: ["./entrypoint.sh","datanode"]
+    volumes:
+      - ./data-stored/datanode-data-1:/datanode/datablocks
+    
+    ports:
+      - 9864:9864
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  datanode-2:
+    image: hadoop-cluster
+    user: root
+    hostname: datanode-2
+    command: ["./entrypoint.sh","datanode"]
+    volumes:
+      - ./data-stored/datanode-data-2:/datanode/datablocks
+    ports:
+      - 9863:9864
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+   
+
+  
+  datanode-3:
+    image: hadoop-cluster
+    user: root
+    hostname: datanode-3
+    command: ["./entrypoint.sh","datanode"]
+    volumes:
+      - ./data-stored/datanode-data-3:/datanode/datablocks 
+    ports:
+      - 9862:9864
+    depends_on:
+      - namenode
+    networks:
+      - hadoop-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  resourcemanager:
+    image: hadoop-cluster
+    hostname: resourcemanager
+    user: root
+    command: ["./entrypoint.sh","resourcemanager"]
+    ports:
+      - 8088:8088
+    networks:
+      - hadoop-net
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 1024M
+  
+  nodemanager:
+    image: hadoop-cluster
+    hostname: nodemanager
+    user: root
+    command: ["./entrypoint.sh","nodemanager"]
+    networks:
+      - hadoop-net
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+
+########################## Spark ##########################
+  spark:
+    image: spark-cluster
+    hostname: spark
+    command: ["spark-class", "org.apache.spark.deploy.master.Master"]
+    volumes:
+      - ./app:/app
+    ports:
+      - 7077:7077
+      - 8080:8080
+    networks:
+      - hadoop-net
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: 512M
+
+  spark-worker-1:
+    image: spark-cluster
+    hostname: spark-worker
+    command: ["spark-class", "org.apache.spark.deploy.worker.Worker","spark://spark:7077"]
+    depends_on:
+      - spark
+    ports:
+      - '8081'
+    networks:
+      - hadoop-net
+
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 1024M
+      mode: replicated
+      replicas: 3  
+
+########################## nifi ##########################
+  nifi-node:
+    image: apache/nifi
+    hostname: nifi-ingestion
+    ports:
+      - 8443:8443
+      - 4883:4883
+    networks:
+      - hadoop-net
+    volumes:
+      - ./hadoop/config:/hadoop/conf
+    environment:
+    - SINGLE_USER_CREDENTIALS_USERNAME=admin 
+    - SINGLE_USER_CREDENTIALS_PASSWORD=password1234
+    - NIFI_WEB_HTTP_PORT=4883
+
+    
+
+    deploy:
+      resources:
+        limits:
+          cpus: 4
+          memory: 3072M
+
+
+networks:
+  hadoop-net:
+    external: true
+
