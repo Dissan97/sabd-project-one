@@ -49,7 +49,7 @@ RUN mkdir -p /nodemanager/logs && mkdir -p /nodemanager/intermediate
 
 WORKDIR ${HADOOP_HOME}
 COPY config/entrypoint.sh .
-COPY config/load_data_set.sh .
+COPY config/setup_hdfs.sh .
 # Expose necessary ports based on the configuration
 # Ports from core-site.xml
 # Ports from yarn-site.xml

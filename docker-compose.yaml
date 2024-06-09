@@ -1,5 +1,3 @@
-version: '3'
-
 services:
 ########################## Hadoop ##########################
   namenode:
@@ -15,12 +13,11 @@ services:
       - 9870:9870
     networks:
       - hadoop-net
-    
     deploy:
       resources:
         limits:
-          cpus: 1
-          memory: 2048M
+          memory: 2G
+    
 
   datanode-1:
     image: hadoop-cluster
@@ -29,6 +26,10 @@ services:
     command: ["./entrypoint.sh","datanode"]
     volumes:
       - ./data-stored/datanode-data-1:/datanode/datablocks
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     
     ports:
       - 9864:9864
@@ -37,11 +38,6 @@ services:
     networks:
       - hadoop-net
     
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
 
   datanode-2:
     image: hadoop-cluster
@@ -59,10 +55,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
           memory: 512M
    
-
   
   datanode-3:
     image: hadoop-cluster
@@ -80,9 +74,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
-
+          memory: 512M    
+  
   resourcemanager:
     image: hadoop-cluster
     hostname: resourcemanager
@@ -95,9 +88,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: 1
-          memory: 1024M
-  
+          memory: 1G
+ 
   nodemanager:
     image: hadoop-cluster
     hostname: nodemanager
@@ -108,8 +100,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 1024M
+          memory: 512G
 
 ########################## Spark ##########################
   spark:
@@ -118,42 +109,67 @@ services:
     command: ["spark-class", "org.apache.spark.deploy.master.Master"]
     volumes:
       - ./app:/app
+      - ./data-stored/history-logs:/spark/history-logs
     ports:
       - 7077:7077
       - 8080:8080
+      - 4040:4040
     networks:
       - hadoop-net
     deploy:
       resources:
         limits:
-          cpus: 1
-          memory: 512M
+          memory: 2G
 
-  spark-worker-1:
+  spark-worker:
     image: spark-cluster
     hostname: spark-worker
     command: ["spark-class", "org.apache.spark.deploy.worker.Worker","spark://spark:7077"]
     depends_on:
       - spark
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKLOAD=worker
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=file:/spark-logs
     ports:
       - '8081'
     networks:
       - hadoop-net
-
     deploy:
       resources:
         limits:
-          cpus: 2
-          memory: 1024M
-      mode: replicated
-      replicas: 3  
+          memory: 1G
+  spark-history-server:
+    image: spark-cluster
+    hostname: spark-history-server
+    volumes:  
+      - ./data-stored/history-logs:/spark/history-logs
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+    depends_on:
+      - spark
+    command: ["spark-class", "org.apache.spark.deploy.history.HistoryServer"]
+    ports:
+      - 18080:18080
+    networks:
+      - hadoop-net
+    environment:
+      - SPARK_HISTORY_OPTS=-Dspark.history.fs.logDirectory=file:/spark/history-logs -Dspark.history.ui.port=18080
+ 
 
 ########################## nifi ##########################
   nifi-node:
     image: apache/nifi
     hostname: nifi-ingestion
     ports:
-      - 8443:8443
+      - 9443:9443
       - 4883:4883
     networks:
       - hadoop-net
@@ -161,19 +177,119 @@ services:
       - ./hadoop/config:/hadoop/conf
     environment:
     - SINGLE_USER_CREDENTIALS_USERNAME=admin 
-    - SINGLE_USER_CREDENTIALS_PASSWORD=password1234
+    - SINGLE_USER_CREDENTIALS_PASSWORD=$Abd.Proj1-batch-Queries
     - NIFI_WEB_HTTP_PORT=4883
+    - NIFI_WEB_HTTPS_PORT=9443
 
-    
+########################## Cassandra ##########################
 
+  cassandra-1:
+    image: "cassandra:latest" 
+    container_name: "cassandra-1"
+    ports:
+      - 7000:7000
+      - 9042:9042
+    networks:
+      - hadoop-net
+    environment:
+      - CASSANDRA_USER=admin
+      - CASSANDRA_PASSWORD=admin
+      - CASSANDRA_START_RPC=true       # default
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0  # default
+      - CASSANDRA_LISTEN_ADDRESS=cassandra-1  # default, use IP addr of container # = CASSANDRA_BROADCAST_ADDRESS
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=docker-compose-local
+    volumes:
+      - ./data-stored/cassandra-persistence/cassandra-node-1:/var/lib/cassandra:rw
+    restart:
+      on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 2m
+      start_period: 2m
+      timeout: 10s
+      retries: 3
     deploy:
       resources:
         limits:
-          cpus: 4
-          memory: 3072M
+          memory: 4G
 
+  cassandra-2:
+    image: "cassandra:latest" 
+    container_name: "cassandra-2"
+    ports:
+      - 9043:9042
+    networks:
+      - hadoop-net
+    environment:
+      - CASSANDRA_START_RPC=true       # default
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0  # default
+      - CASSANDRA_LISTEN_ADDRESS=cassandra-2  # default, use IP addr of container # = CASSANDRA_BROADCAST_ADDRESS
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=docker-compose-local
+      - CASSANDRA_SEEDS=cassandra-1
+    depends_on:
+      cassandra-1:
+        condition: service_healthy
+    volumes:
+      - ./data-stored/cassandra-persistence/cassandra-node-2:/var/lib/cassandra:rw
+    restart:
+      on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 2m
+      start_period: 2m
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  cassandra-3:
+    image: "cassandra:latest" 
+    container_name: "cassandra-3"
+    ports:
+      - 9044:9042
+    networks:
+      - hadoop-net
+    environment:
+      - CASSANDRA_START_RPC=true       # default
+      - CASSANDRA_RPC_ADDRESS=0.0.0.0  # default
+      - CASSANDRA_LISTEN_ADDRESS=cassandra-3 # default, use IP addr of container # = CASSANDRA_BROADCAST_ADDRESS
+      - CASSANDRA_CLUSTER_NAME=cassandra-cluster
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_DC=docker-compose-local
+      - CASSANDRA_SEEDS=cassandra-1
+    depends_on:
+      cassandra-2:
+        condition: service_healthy
+    volumes:
+      - ./data-stored/cassandra-persistence/cassandra-node-3:/var/lib/cassandra:rw
+    restart:
+      on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status"]
+      interval: 1m
+      start_period: 10s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 4G
 
 networks:
   hadoop-net:
-    external: true
+    
 
+#docker compose exec cassandra-1 cqlsh -e "CREATE KEYSPACE IF NOT EXIST spark_results WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };"
+#docker compose exec cassandra-1 cqlsh -e "CREATE TABLE IF NOT EXIST spark_results.vault_failures (vault_id int PRIMARY KEY,event_date date,number_of_failures int);"
+#docker compose exec cassandra-1 cqlsh -e "CREATE TABLE IF NOT EXIST spark_results.top_failure_per_vault_models (vault_id int , model text, count int PRIMARYKEY(vault_id, model));"
+#docker compose exec cassandra-1 cqlsh -e "CREATE TABLE IF NOT EXIST spark_results.top_failure_models (model text PRIMARY KEY, count int);"
+#docker compose exec cassandra-1 cqlsh -e "CREATE TABLE IF NOT EXIST spark_results.percentiles (failure int PRIMARY KEY,min double,25th_percentile double,50th_percentile double,75th_percentile double,max double, count int);"
+
+#failure,min,25th_percentile,50th_percentile,75th_percentile,max,count
+#vault_id,count,models

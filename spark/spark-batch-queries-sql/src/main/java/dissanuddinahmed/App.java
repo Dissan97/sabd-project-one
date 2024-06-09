@@ -31,7 +31,7 @@ public class App
       resDf.write().mode("overwrite")
 				.option("header", "true")
 				.option("sep", ",")
-				.csv("hdfs://namenode:54310/pipeline/results/sql/FirtsQuery");
+				.csv("hdfs://namenode:54310/user/spark/pipeline/results/firtsQuery");
     }
 
 
@@ -45,8 +45,11 @@ public class App
         "ORDER BY COUNT(failure) DESC "+
         "LIMIT 10"
       );
-      resModelDf.show();
-      
+      //resModelDf.show();
+      resModelDf.write().mode("overwrite")
+                .option("header", "true")
+                .option("sep", ",")
+                .csv("hdfs://namenode:54310/user/spark/pipeline/results/secondQuery/TopModels");
       Dataset<Row> resultVaultPerModelDf = spark.sql(
         "WITH perVaultFailure AS ( " +
         "  SELECT vault_id, COUNT(*) AS failure_count " +
@@ -79,7 +82,11 @@ public class App
 
     );
 
-    resultVaultPerModelDf.show(false);
+    //resultVaultPerModelDf.show(false);
+    resultVaultPerModelDf.write().mode("overwrite")
+                .option("header", "true")
+                .option("sep", ",")
+                .csv("hdfs://namenode:54310/user/spark/pipeline/results/secondQuery/topVaultWithModel");
 
     }
 
@@ -91,7 +98,7 @@ public class App
 				.getOrCreate()) {
 
 			  Dataset<Row> diskFailureDf = spark.read().option("header", true)
-					  .parquet("hdfs://namenode:54310/pipeline/preprocessed/data.parquet");
+					  .parquet("hdfs://namenode:54310/user/spark/pipeline/preprocessed/data.parquet");
 
 			  LOGGER.info(LOG_NOTICE+"DISK FAILURE SCHEMA"+LOG_NOTICE);
 			  diskFailureDf.printSchema();

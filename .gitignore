@@ -5,6 +5,10 @@
 /app/
 */target
 /target/
+*/target/*
 ./spark/spark-barch-queries/target/*/*
 ./spark/spark-barch-queries-sql/target/*/*
 .vscode/
+.idea/
+.idea
+.idea/*
