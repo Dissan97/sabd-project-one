@@ -1,0 +1,16 @@
+usage of run.sh
+
+args 
+        --install: build Dockerfile hadoop in hadoop-cluster and spark in
+        spark-cluster
+
+        --start $1 '' will run docker compose up -d $1 v and $2 3|5 will
+        run docker-compose-vertical-3|5 file
+        $1 h will run compose scale spark-worker
+
+        --jars will install jar file for spark-submit
+        --init will setup hdfs directory for the project
+        --query $1 h3 will launch 3 spark worker compose then run_queries.sh
+                same for h5, v3, v5 will compose up with single spark-worker
+                with 3|5 core or 3|5 Gb
+        
