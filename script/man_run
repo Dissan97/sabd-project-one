@@ -10,7 +10,10 @@ args
 
         --jars will install jar file for spark-submit
         --init will setup hdfs directory for the project
+	--setup-cassandra will setup the keyspaces and tables DDL
+		then data must be insert by nifi using cassandra-flow.xml
         --query $1 h3 will launch 3 spark worker compose then run_queries.sh
                 same for h5, v3, v5 will compose up with single spark-worker
                 with 3|5 core or 3|5 Gb
-        
+	--plot will launch a python code to load tables from cassandra and plot it 
+		remember to insert data in cassandra by using cassandra-flow.xml

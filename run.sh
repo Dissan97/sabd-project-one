@@ -104,14 +104,24 @@ case "$1" in
 	--init)
 	init_hdfs
 	;;
+        --setup-cassandra)
+                source script/cassandra_init.sh
+        ;;
 	--query)
 	run_query $2 $3
 	;;
+	--plot)
+		virtualenv venv
+		source venv/bin/activate
+		pip install -r plotter-py/requirements.txt
+		python plotter-py/plotter.py
+	;;
+	
 	--help|--h|--man)
 	cat script-man/man_run
 	;;
 	*)
-	echo -e "Usage: $0 {--install|--start|--jars|--init|--query}\nfor all the args type --help or -h for info"
+	echo -e "Usage: $0 {--install|--start|--jars|--init|--setup-cassandra|--query|--plot}\nfor all the args type --help or -h for info"
 	;;
 esac
 

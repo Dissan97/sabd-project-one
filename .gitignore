@@ -4,6 +4,7 @@
 /target/*
 /app/
 */target
+target
 /target/
 */target/*
 ./spark/spark-barch-queries/target/*/*
@@ -12,3 +13,8 @@
 .idea/
 .idea
 .idea/*
+/venv/
+*/venv/*
+/venv/*
+venv/*
+venv/

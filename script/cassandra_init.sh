@@ -17,7 +17,7 @@ docker compose exec cassandra-1 cqlsh -e "CREATE TABLE IF NOT EXISTS spark_resul
     vault_id int,
     list_of_models text,
     failures_count int,
-    PRIMARY KEY(vault_id, models)
+    PRIMARY KEY(vault_id)
 );"
 
 echo creating table query two top_failure_models
